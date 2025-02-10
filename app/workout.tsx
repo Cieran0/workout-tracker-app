@@ -14,58 +14,15 @@ import { useNavigation } from '@react-navigation/native';
 import { Link } from 'expo-router';
 import { styles } from './style';
 
-// Mock exercise database
-const MOCK_EXERCISES = [
-  {
-    id: 1,
-    name: 'Bench Press',
-    bodyPart: 'Chest',
-    lastDone: new Date('2024-03-15').getTime(),
-    exampleSets: [{ reps: '8', weight: '60' }],
-  },
-  {
-    id: 2,
-    name: 'Shoulder Press',
-    bodyPart: 'Shoulders',
-    lastDone: new Date('2024-03-14').getTime(),
-    exampleSets: [{ reps: '10', weight: '30' }],
-  },
-  {
-    id: 3,
-    name: 'Squat',
-    bodyPart: 'Legs',
-    lastDone: new Date('2024-03-13').getTime(),
-    exampleSets: [{ reps: '12', weight: '100' }],
-  },
-  {
-    id: 4,
-    name: 'Deadlift',
-    bodyPart: 'Back',
-    lastDone: new Date('2024-03-12').getTime(),
-    exampleSets: [{ reps: '5', weight: '120' }],
-  },
-  {
-    id: 5,
-    name: 'Bicep Curl',
-    bodyPart: 'Arms',
-    lastDone: new Date('2024-03-11').getTime(),
-    exampleSets: [{ reps: '15', weight: '20' }],
-  },
-  {
-    id: 6,
-    name: 'Lunges',
-    bodyPart: 'Legs',
-    lastDone: new Date('2024-03-10').getTime(),
-    exampleSets: [{ reps: '10', weight: '40' }],
-  },
-  {
-    id: 7,
-    name: 'Lat Pulldown',
-    bodyPart: 'Back',
-    lastDone: new Date('2024-03-09').getTime(),
-    exampleSets: [{ reps: '12', weight: '50' }],
-  },
-];
+interface Exercise {
+  id: number;
+  name: string;
+  body_part: string;
+}
+
+interface WorkoutExercise extends Exercise {
+  sets: Array<{ reps: string; weight: string; completed: boolean }>;
+}
 
 export default function WorkoutPage() {
   const navigation = useNavigation();
@@ -76,19 +33,32 @@ export default function WorkoutPage() {
   }, [navigation]);
 
   const [seconds, setSeconds] = useState(0);
-  const [exercises, setExercises] = useState([]);
+  const [exercises, setExercises] = useState<WorkoutExercise[]>([]);
   const [showExerciseModal, setShowExerciseModal] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedBodyPart, setSelectedBodyPart] = useState('All');
-  const [availableExercises, setAvailableExercises] = useState(MOCK_EXERCISES);
+  const [availableExercises, setAvailableExercises] = useState<Exercise[]>([]);
   const [dropdownOpen, setDropdownOpen] = useState(false);
 
-  const bodyParts = ['All', 'Chest', 'Shoulders', 'Legs', 'Back', 'Arms'];
+  useEffect(() => {
+    const fetchExercises = async () => {
+      try {
+        const response = await fetch('http://192.168.0.7:7878/exercises?userid=1');
+        const data = await response.json();
+        setAvailableExercises(data);
+      } catch (error) {
+        console.error('Error fetching exercises:', error);
+      }
+    };
 
-  // Timer functionality
+    fetchExercises();
+  }, []);
+
+  const bodyParts = ['All', ...new Set(availableExercises.map(ex => ex.body_part))];
+
   useEffect(() => {
     const interval = setInterval(() => {
-      setSeconds((sec) => sec + 1);
+      setSeconds(sec => sec + 1);
     }, 1000);
     return () => clearInterval(interval);
   }, []);
@@ -99,133 +69,90 @@ export default function WorkoutPage() {
     return `${minutes}:${seconds.toString().padStart(2, '0')}`;
   };
 
-  // Filter and sort exercises
   const filterExercises = () => {
     return availableExercises
-      .filter((ex) => {
-        const matchesSearch = ex.name
-          .toLowerCase()
-          .includes(searchQuery.toLowerCase());
-        const matchesBodyPart =
-          selectedBodyPart === 'All' || ex.bodyPart === selectedBodyPart;
+      .filter(ex => {
+        const matchesSearch = ex.name.toLowerCase().includes(searchQuery.toLowerCase());
+        const matchesBodyPart = selectedBodyPart === 'All' || ex.body_part === selectedBodyPart;
         return matchesSearch && matchesBodyPart;
-      })
-      .sort((a, b) => b.lastDone - a.lastDone);
+      });
   };
 
-  // Add a new exercise from the modal
-  const handleAddExercise = (exercise) => {
-    const newExercise = {
-      id: exercises.length + 1,
-      name: exercise.name,
-      sets: [...exercise.exampleSets],
+  const handleAddExercise = (exercise: Exercise) => {
+    const newExercise: WorkoutExercise = {
+      ...exercise,
+      sets: [{ reps: '', weight: '', completed: false }]
     };
     setExercises([...exercises, newExercise]);
-
-    // Update last done time
-    setAvailableExercises((prev) =>
-      prev.map((ex) =>
-        ex.id === exercise.id ? { ...ex, lastDone: Date.now() } : ex
-      )
-    );
     setShowExerciseModal(false);
   };
 
-  // Add a new set to a specific exercise
   const addSetToExercise = (exerciseId: number) => {
-    setExercises((prevExercises) =>
-      prevExercises.map((exercise) => {
-        if (exercise.id === exerciseId) {
-          return {
-            ...exercise,
-            sets: [...exercise.sets, { reps: '', weight: '', completed: false }],
-          };
-        }
-        return exercise;
-      })
-    );
+    setExercises(prev => prev.map(ex => 
+      ex.id === exerciseId 
+        ? { ...ex, sets: [...ex.sets, { reps: '', weight: '', completed: false }] } 
+        : ex
+    ));
   };
 
-  // Update a specific set field for an exercise
   const updateSetField = (
     exerciseId: number,
     setIndex: number,
     field: 'reps' | 'weight',
     value: string
   ) => {
-    setExercises((prevExercises) =>
-      prevExercises.map((exercise) => {
-        if (exercise.id === exerciseId) {
-          const newSets = exercise.sets.map((set, index) => {
-            if (index === setIndex) {
-              return { ...set, [field]: value };
-            }
-            return set;
-          });
-          return { ...exercise, sets: newSets };
-        }
-        return exercise;
-      })
-    );
+    setExercises(prev => prev.map(ex => {
+      if (ex.id === exerciseId) {
+        const newSets = ex.sets.map((set, idx) => 
+          idx === setIndex ? { ...set, [field]: value } : set
+        );
+        return { ...ex, sets: newSets };
+      }
+      return ex;
+    }));
   };
 
-  // Toggle set completion
   const toggleSetComplete = (exerciseId: number, setIndex: number) => {
-    setExercises((prevExercises) =>
-      prevExercises.map((exercise) => {
-        if (exercise.id === exerciseId) {
-          const newSets = exercise.sets.map((set, index) => {
-            if (index === setIndex) {
-              return { ...set, completed: !set.completed };
-            }
-            return set;
-          });
-          return { ...exercise, sets: newSets };
-        }
-        return exercise;
-      })
-    );
+    setExercises(prev => prev.map(ex => {
+      if (ex.id === exerciseId) {
+        const newSets = ex.sets.map((set, idx) => 
+          idx === setIndex ? { ...set, completed: !set.completed } : set
+        );
+        return { ...ex, sets: newSets };
+      }
+      return ex;
+    }));
   };
 
-  // Helper function to count exercises per category
   const getExerciseCount = (bodyPart: string) => {
     if (bodyPart === 'All') return availableExercises.length;
-    return availableExercises.filter((ex) => ex.bodyPart === bodyPart).length;
+    return availableExercises.filter(ex => ex.body_part === bodyPart).length;
   };
 
   const HEADER_HEIGHT = 50;
 
   return (
     <SafeAreaView style={localStyles.container}>
-      {/* Header with background */}
-      <View
-        style={[
-          localStyles.header,
-          {
-            paddingTop: insets.top,
-            height: insets.top + HEADER_HEIGHT,
-            backgroundColor: '#1A1A1A',
-          },
-        ]}
-      >
+      <View style={[
+        localStyles.header,
+        {
+          paddingTop: insets.top,
+          height: insets.top + HEADER_HEIGHT,
+          backgroundColor: '#1A1A1A',
+        }
+      ]}>
         <Text style={styles.timer}>{formatTime(seconds)}</Text>
         <TouchableOpacity style={styles.finishButton}>
           <Text style={styles.finishButtonText}>Finish</Text>
         </TouchableOpacity>
       </View>
 
-      {/* Main Content */}
-      <ScrollView
-        contentContainerStyle={[
-          localStyles.scrollContent,
-          { paddingTop: insets.top + HEADER_HEIGHT + 10 },
-        ]}
-      >
-        {exercises.map((exercise) => (
-          <View
-            key={exercise.id}
-            style={[localStyles.exerciseContainer, styles.exerciseCard]}
-          >
+      <ScrollView contentContainerStyle={[
+        localStyles.scrollContent,
+        { paddingTop: insets.top + HEADER_HEIGHT + 10 }
+      ]}>
+        {exercises.map(exercise => (
+          <View key={exercise.id} style={[localStyles.exerciseContainer, styles.exerciseCard]}>
             <Text style={styles.exerciseName}>{exercise.name}</Text>
 
             <View style={localStyles.setsHeaderRow}>
@@ -249,16 +176,14 @@ export default function WorkoutPage() {
                 key={index}
                 style={[
                   localStyles.setRow,
-                  set.completed && localStyles.completedSet,
+                  set.completed && localStyles.completedSet
                 ]}
               >
                 <View style={[localStyles.setColumn, { flex: 0.5 }]}>
                   <Text style={localStyles.setLabel}>{index + 1}</Text>
                 </View>
                 <View style={[localStyles.setColumn, { flex: 2 }]}>
-                  <Text style={localStyles.previousLabel}>
-                    {index === 0 ? '50kg x 8' : '55kg x 8'}
-                  </Text>
+                  <Text style={localStyles.previousLabel}>-</Text>
                 </View>
                 <View style={[localStyles.inputColumn, { flex: 1 }]}>
                   <TextInput
@@ -267,9 +192,7 @@ export default function WorkoutPage() {
                     placeholder="Kg"
                     placeholderTextColor="#888"
                     value={set.weight}
-                    onChangeText={(text) =>
-                      updateSetField(exercise.id, index, 'weight', text)
-                    }
+                    onChangeText={text => updateSetField(exercise.id, index, 'weight', text)}
                   />
                 </View>
                 <View style={[localStyles.inputColumn, { flex: 1 }]}>
@@ -279,16 +202,14 @@ export default function WorkoutPage() {
                     placeholder="Reps"
                     placeholderTextColor="#888"
                     value={set.reps}
-                    onChangeText={(text) =>
-                      updateSetField(exercise.id, index, 'reps', text)
-                    }
+                    onChangeText={text => updateSetField(exercise.id, index, 'reps', text)}
                   />
                 </View>
                 <View style={localStyles.checkButtonColumn}>
                   <TouchableOpacity
                     style={[
                       localStyles.checkButton,
-                      set.completed && localStyles.checkButtonActive,
+                      set.completed && localStyles.checkButtonActive
                     ]}
                     onPress={() => toggleSetComplete(exercise.id, index)}
                   >
@@ -307,7 +228,6 @@ export default function WorkoutPage() {
           </View>
         ))}
 
-        {/* Add Exercise Button */}
         <TouchableOpacity
           style={localStyles.fullWidthButton}
           onPress={() => setShowExerciseModal(true)}
@@ -315,7 +235,6 @@ export default function WorkoutPage() {
           <Text style={styles.addButtonText}>+ Add Exercise</Text>
         </TouchableOpacity>
 
-        {/* Cancel Workout Button */}
         <Link href="/" asChild>
           <TouchableOpacity style={localStyles.fullWidthButtonCancel}>
             <Text style={styles.cancelButtonText}>Cancel Workout</Text>
@@ -323,12 +242,7 @@ export default function WorkoutPage() {
         </Link>
       </ScrollView>
 
-      {/* Exercise Selection Modal */}
-      <Modal
-        visible={showExerciseModal}
-        animationType="slide"
-        transparent={false}
-      >
+      <Modal visible={showExerciseModal} animationType="slide" transparent={false}>
         <View style={localStyles.modalContainer}>
           <TouchableOpacity
             style={localStyles.closeButton}
@@ -345,7 +259,6 @@ export default function WorkoutPage() {
             onChangeText={setSearchQuery}
           />
 
-          {/* Custom Dropdown Filter */}
           <View style={localStyles.dropdownContainer}>
             <TouchableOpacity
               style={localStyles.dropdownTrigger}
@@ -362,7 +275,7 @@ export default function WorkoutPage() {
             {dropdownOpen && (
               <View style={localStyles.dropdownList}>
                 <ScrollView>
-                  {bodyParts.map((part) => (
+                  {bodyParts.map(part => (
                     <TouchableOpacity
                       key={part}
                       style={localStyles.dropdownListItem}
@@ -381,10 +294,9 @@ export default function WorkoutPage() {
             )}
           </View>
 
-          {/* Exercise List */}
           <FlatList
             data={filterExercises()}
-            keyExtractor={(item) => item.id.toString()}
+            keyExtractor={item => item.id.toString()}
             renderItem={({ item }) => (
               <TouchableOpacity
                 style={localStyles.exerciseItem}
@@ -393,8 +305,7 @@ export default function WorkoutPage() {
                 <View>
                   <Text style={localStyles.exerciseName}>{item.name}</Text>
                   <Text style={localStyles.exerciseDetails}>
-                    {item.bodyPart} • Last done:{' '}
-                    {new Date(item.lastDone).toLocaleDateString()}
+                    {item.body_part}
                   </Text>
                 </View>
               </TouchableOpacity>
@@ -622,17 +533,17 @@ const localStyles = StyleSheet.create({
     borderBottomColor: '#3A3A3A',
   },
   exerciseName: {
-    color: '#FFF', // Set text color to white
+    color: '#FFF',
     fontSize: 16,
     fontWeight: '600',
   },
   exerciseDetails: {
-    color: '#888', // Set text color to light gray
+    color: '#888',
     fontSize: 14,
     marginTop: 4,
   },
   emptyText: {
-    color: '#888', // Set text color for empty state
+    color: '#888',
     fontSize: 16,
     textAlign: 'center',
     marginTop: 20,
