@@ -1,3 +1,4 @@
+import { Exercise } from '@/app/types/workoutTypes';
 import React, { useState } from 'react';
 import {
   View,
@@ -9,12 +10,6 @@ import {
   ScrollView,
   FlatList,
 } from 'react-native';
-
-export interface Exercise {
-  id: number;
-  name: string;
-  body_part: string;
-}
 
 interface ExerciseModalProps {
   visible: boolean;

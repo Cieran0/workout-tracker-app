@@ -1,41 +1,36 @@
 import React from 'react';
-import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
+import { View, Text } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { globalStyles } from '../globalStyles';
+import PrimaryButton from '../../components/PrimaryButton';
+import { buttons, layout, typography } from '@/app/shared/theme';
 
 interface WorkoutHeaderProps {
   seconds: number;
   handleFinishWorkout: () => void;
 }
 
-const WorkoutHeader: React.FC<WorkoutHeaderProps> = ({ seconds, handleFinishWorkout }) => {
-  const HEADER_HEIGHT = 50;
-
+const WorkoutHeader: React.FC<WorkoutHeaderProps> = ({ 
+  seconds, 
+  handleFinishWorkout 
+}) => {
   const formatTime = (secs: number) => {
     const minutes = Math.floor(secs / 60);
-    const seconds = secs % 60;
-    return `${minutes}:${seconds.toString().padStart(2, '0')}`;
+    const remainingSeconds = secs % 60;
+    return `${minutes}:${remainingSeconds.toString().padStart(2, '0')}`;
   };
 
   return (
-    <View style={{ backgroundColor: '#1A1A1A' }}>
-      <View style={[headerStyles.header, { height: HEADER_HEIGHT }]}>
-        <Text style={globalStyles.timer}>{formatTime(seconds)}</Text>
-        <TouchableOpacity style={globalStyles.finishButton} onPress={handleFinishWorkout}>
-          <Text style={globalStyles.finishButtonText}>Finish</Text>
-        </TouchableOpacity>
-      </View>
+    <View style={[layout.header]}>
+      <Text style={typography.timer}>{formatTime(seconds)}</Text>
+      <PrimaryButton 
+        variant="primary"
+        onPress={handleFinishWorkout}
+        buttonStyle={buttons.finish}
+      >
+        Finish
+      </PrimaryButton>
     </View>
   );
 };
-
-const headerStyles = StyleSheet.create({
-  header: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingHorizontal: 20,
-  },
-});
 
 export default WorkoutHeader;

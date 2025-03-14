@@ -1,19 +1,9 @@
 import React from 'react';
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
-import { globalStyles } from '../globalStyles';
 import SetRow from './SetRow';
+import { WorkoutExercise } from '@/app/types/workoutTypes';
+import { cards, typography } from '@/app/shared/theme';
 
-export interface WorkoutExercise {
-  id: number;
-  name: string;
-  body_part: string;
-  sets: Array<{
-    id: number;
-    reps: string;
-    weight: string;
-    completed: boolean;
-  }>;
-}
 
 interface ExerciseCardProps {
   exercise: WorkoutExercise;
@@ -33,7 +23,7 @@ const ExerciseCard: React.FC<ExerciseCardProps> = ({
   onDeleteExercise, // Destructure the new prop
 }) => {
   return (
-    <View style={[localStyles.exerciseContainer, globalStyles.exerciseCard]}>
+    <View style={[localStyles.exerciseContainer, cards.exercise]}>
       {/* Red delete button in the top-right corner */}
       <TouchableOpacity
         style={localStyles.deleteExerciseButton}
@@ -42,7 +32,7 @@ const ExerciseCard: React.FC<ExerciseCardProps> = ({
         <Text style={localStyles.deleteExerciseText}>×</Text>
       </TouchableOpacity>
 
-      <Text style={globalStyles.exerciseName}>{exercise.name}</Text>
+      <Text style={typography.exerciseName}>{exercise.name}</Text>
       <View style={localStyles.setHeaderRow}>
         <View style={[localStyles.headerColumn, { flex: 0.5 }]}>
           <Text style={localStyles.headerText}>Set</Text>
@@ -77,7 +67,7 @@ const ExerciseCard: React.FC<ExerciseCardProps> = ({
 
 const localStyles = StyleSheet.create({
   exerciseContainer: {
-    width: '90%',
+    width: '100%',
     alignSelf: 'center',
     marginVertical: 10,
     position: 'relative', // Needed for absolute positioning of the delete button

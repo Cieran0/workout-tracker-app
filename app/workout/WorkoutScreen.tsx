@@ -1,216 +1,75 @@
-import React, { useState, useEffect, useLayoutEffect } from 'react';
-import { useRouter } from 'expo-router'; // Replace useNavigation with useRouter
-import {
-  View,
-  Text,
-  TouchableOpacity,
-  ScrollView,
-  StyleSheet,
-  Alert,
-} from 'react-native';
+import React from 'react';
+import { useRouter } from 'expo-router';
+import { View, Alert, ScrollView, StyleSheet } from 'react-native';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
-import { Link } from 'expo-router';
-import { globalStyles } from './globalStyles';
+import { useWorkout } from '../hooks/useWorkout';
+import PrimaryButton from '../components/PrimaryButton';
 import WorkoutHeader from './components/WorkoutHeader';
-import ExerciseCard, { WorkoutExercise } from './components/ExerciseCard';
-import ExerciseModal, { Exercise } from './components/ExerciseModal';
+import ExerciseCard from './components/ExerciseCard';
+import ExerciseModal from './components/ExerciseModal';
+import LoadingOverlay from '../components/LoadingOverlay';
+import { buttons, colors, layout } from '../shared/theme';
 
 const WorkoutScreen: React.FC = () => {
-  const router = useRouter(); // Use useRouter instead of useNavigation
+  const router = useRouter();
   const insets = useSafeAreaInsets();
-
-  useLayoutEffect(() => {
-    // No need to set headerShown: false with Expo Router
-  }, []);
-
-  const [seconds, setSeconds] = useState(0);
-  const [exercises, setExercises] = useState<WorkoutExercise[]>([]);
-  const [showExerciseModal, setShowExerciseModal] = useState(false);
-  const [searchQuery, setSearchQuery] = useState('');
-  const [selectedBodyPart, setSelectedBodyPart] = useState('All');
-  const [availableExercises, setAvailableExercises] = useState<Exercise[]>([]);
-
-  useEffect(() => {
-    const fetchExercises = async () => {
-      try {
-        const response = await fetch('http://90.194.168.250:25561/exercises?userid=1');
-        const data = await response.json();
-        setAvailableExercises(data);
-      } catch (error) {
-        console.error('Error fetching exercises:', error);
-      }
-    };
-    fetchExercises();
-  }, []);
-
-  const bodyParts = ['All', ...new Set(availableExercises.map((ex) => ex.body_part))];
-
-  useEffect(() => {
-    const interval = setInterval(() => setSeconds((prev) => prev + 1), 1000);
-    return () => clearInterval(interval);
-  }, []);
-
-  const addSetToExercise = (exerciseId: number) => {
-    setExercises((prev) =>
-      prev.map((ex) =>
-        ex.id === exerciseId
-          ? {
-              ...ex,
-              sets: [
-                ...ex.sets,
-                {
-                  id: Date.now(),
-                  reps: '',
-                  weight: '',
-                  completed: false,
-                },
-              ],
-            }
-          : ex
-      )
-    );
-  };
-
-  const updateSetField = (
-    exerciseId: number,
-    setId: number,
-    field: 'reps' | 'weight',
-    value: string
-  ) => {
-    setExercises((prev) =>
-      prev.map((ex) => {
-        if (ex.id === exerciseId) {
-          const newSets = ex.sets.map((set) =>
-            set.id === setId ? { ...set, [field]: value } : set
-          );
-          return { ...ex, sets: newSets };
-        }
-        return ex;
-      })
-    );
-  };
-
-  const toggleSetComplete = (exerciseId: number, setId: number) => {
-    setExercises((prev) =>
-      prev.map((ex) => {
-        if (ex.id === exerciseId) {
-          const newSets = ex.sets.map((set) =>
-            set.id === setId ? { ...set, completed: !set.completed } : set
-          );
-          return { ...ex, sets: newSets };
-        }
-        return ex;
-      })
-    );
-  };
-
-  const deleteSetFromExercise = (exerciseId: number, setId: number) => {
-    setExercises((prev) =>
-      prev.map((ex) => {
-        if (ex.id === exerciseId) {
-          const newSets = ex.sets.filter((set) => set.id !== setId);
-          return { ...ex, sets: newSets };
-        }
-        return ex;
-      })
-    );
-  };
-
-  const deleteExercise = (exerciseId: number) => {
-    setExercises((prev) => prev.filter((ex) => ex.id !== exerciseId));
-  };
-
-  const handleAddExercise = (exercise: Exercise) => {
-    const newExercise: WorkoutExercise = {
-      ...exercise,
-      sets: [
-        {
-          id: Date.now(),
-          reps: '',
-          weight: '',
-          completed: false,
-        },
-      ],
-    };
-    setExercises((prev) => [...prev, newExercise]);
-    setShowExerciseModal(false);
-  };
+  const {
+    seconds,
+    exercises,
+    showExerciseModal,
+    searchQuery,
+    selectedBodyPart,
+    availableExercises,
+    bodyParts,
+    addSetToExercise,
+    updateSetField,
+    toggleSetComplete,
+    deleteSetFromExercise,
+    deleteExercise,
+    handleAddExercise,
+    saveWorkout,
+    hasIncompleteSets,
+    resetWorkout,
+    setShowExerciseModal,
+    setSearchQuery,
+    setSelectedBodyPart,
+    isLoadingExercises,
+    isSaving
+  } = useWorkout();
 
   const handleCancelWorkout = () => {
-    setExercises([]);
+    resetWorkout();
     router.push('/(tabs)');
   };
 
-  const handleFinishWorkout = () => {
-    const hasIncompleteSets = exercises.some((ex) =>
-      ex.sets.some((set) => !set.completed)
-    );
-  
+  const handleFinishWorkout = async () => {
     if (hasIncompleteSets) {
       Alert.alert(
         'Are you sure?',
         'Only completed sets will be recorded.',
         [
-          {
-            text: 'Cancel',
-            style: 'cancel',
-          },
+          { text: 'Cancel', style: 'cancel' },
           {
             text: 'Confirm',
-            onPress: saveWorkout, // Save workout if user confirms
+            onPress: async () => {
+              const success = await saveWorkout();
+              if (success) router.push('/(tabs)');
+            },
           },
         ]
       );
     } else {
-      saveWorkout(); // Save workout directly if all sets are completed
-    }
-  };
-  
-  const saveWorkout = async () => {
-    // Prepare workout data
-    const workoutData = {
-      user_id: 1, // Hardcoded user ID for now
-      exercises: exercises.map((exercise) => ({
-        exercise_id: exercise.id,
-        sets: exercise.sets
-          .filter((set) => set.completed) // Only include completed sets
-          .map((set) => ({
-            reps: parseInt(set.reps) || 0, // Convert reps to a number
-            weight: parseFloat(set.weight) || 0, // Convert weight to a number
-          })),
-      })),
-    };
-  
-    try {
-      // Send POST request to the backend
-      const response = await fetch('http://90.194.168.250:25561/workout?userid=1', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(workoutData),
-      });
-  
-      // Check if the request was successful
-      if (response.ok) {
-        console.log('Workout saved successfully:', await response.json());
-        // Navigate back to the home screen
-        router.push('/(tabs)'); // Use the correct route for your app
-      } else {
-        console.error('Failed to save workout:', response.statusText);
-        Alert.alert('Error', 'Failed to save workout. Please try again.');
-      }
-    } catch (error) {
-      console.error('Error saving workout:', error);
-      Alert.alert('Error', 'An error occurred while saving the workout.');
+      const success = await saveWorkout();
+      if (success) router.push('/(tabs)');
     }
   };
 
   return (
-    <SafeAreaView style={[globalStyles.container, { backgroundColor: '#1A1A1A' }]} edges={['top']}>
+    <SafeAreaView style={[layout.page]} edges={['top']}>
       <WorkoutHeader seconds={seconds} handleFinishWorkout={handleFinishWorkout} />
-      <View style={globalStyles.container}>
-        <ScrollView contentContainerStyle={localStyles.scrollContent}>
+      <LoadingOverlay visible={isSaving || isLoadingExercises} />
+      <View style={layout.page}>
+        <ScrollView contentContainerStyle={layout.scrollContent}>
           {exercises.map((ex) => (
             <ExerciseCard
               key={ex.id}
@@ -224,18 +83,21 @@ const WorkoutScreen: React.FC = () => {
               onDeleteExercise={() => deleteExercise(ex.id)}
             />
           ))}
-          <TouchableOpacity
-            style={localStyles.fullWidthButton}
-            onPress={() => setShowExerciseModal(true)}
-          >
-            <Text style={globalStyles.addButtonText}>+ Add Exercise</Text>
-          </TouchableOpacity>
-          <TouchableOpacity
-            style={localStyles.fullWidthButtonCancel}
-            onPress={handleCancelWorkout}
-          >
-            <Text style={globalStyles.cancelButtonText}>Cancel Workout</Text>
-          </TouchableOpacity>
+        <PrimaryButton
+          variant="secondary"
+          onPress={() => setShowExerciseModal(true)}
+          buttonStyle={[buttons.fullWidth]}
+        >
+          + Add Exercise
+        </PrimaryButton>
+
+        <PrimaryButton
+          variant="cancel"
+          onPress={handleCancelWorkout}
+          buttonStyle={[buttons.fullWidth, styles.cancelButton]}
+        >
+          Cancel Workout
+        </PrimaryButton>
         </ScrollView>
         <ExerciseModal
           visible={showExerciseModal}
@@ -249,35 +111,18 @@ const WorkoutScreen: React.FC = () => {
           onSelectExercise={handleAddExercise}
         />
       </View>
-      <View style={{ height: insets.bottom, backgroundColor: '#0A0A0A' }} />
     </SafeAreaView>
   );
 };
 
-const localStyles = StyleSheet.create({
-  scrollContent: {
-    padding: 16,
-    paddingBottom: 40,
-    alignItems: 'center',
-    paddingTop: 20,
-  },
-  fullWidthButton: {
-    width: '90%',
+const styles = StyleSheet.create({
+  addButton: {
     backgroundColor: '#2A2A2A',
-    padding: 18,
-    borderRadius: 12,
-    alignItems: 'center',
-    marginVertical: 8,
-    borderWidth: 1,
-    borderColor: '#3A3A3A',
+    marginTop: 8,
   },
-  fullWidthButtonCancel: {
-    width: '90%',
+  cancelButton: {
     backgroundColor: 'red',
-    padding: 18,
-    borderRadius: 12,
-    alignItems: 'center',
-    marginVertical: 8,
+    marginTop: 8,
   },
 });
 
