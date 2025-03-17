@@ -1,24 +1,40 @@
 import React from 'react';
 import { View, Text, TextInput, TouchableOpacity, StyleSheet } from 'react-native';
-import { Link } from 'expo-router';
+import { Link, useRouter } from 'expo-router';
+import { AuthContext } from '../providers/AuthProvider'; // Import AuthContext
 
 const Login: React.FC = () => {
+  const { login } = React.useContext(AuthContext);
+  const router = useRouter(); // Initialize router
+
+  const handleLogin = () => {
+    login(); // Set user ID to 1
+    router.replace('/(tabs)'); // Navigate to main app
+  };
+
+
   return (
     <View style={styles.container}>
       <Text style={styles.title}>Login</Text>
-      <TextInput 
+      <TextInput
         style={styles.input}
         placeholder="Username"
       />
-      <TextInput 
+      <TextInput
         style={styles.input}
         placeholder="Password"
         secureTextEntry
       />
-      <TouchableOpacity style={styles.button} onPress={() => console.log('Login')}>
+      <TouchableOpacity
+        style={styles.button}
+        onPress={handleLogin}
+      >
         <Text style={styles.buttonText}>Login</Text>
       </TouchableOpacity>
-      <TouchableOpacity style={styles.googleButton} onPress={() => console.log('Login with Google')}>
+      <TouchableOpacity
+        style={styles.googleButton}
+        onPress={() => login()} // Also call login for Google
+      >
         <Text style={styles.buttonText}>Login with Google</Text>
       </TouchableOpacity>
       <TouchableOpacity style={styles.linkButton} onPress={() => console.log('Navigate to Register')}>

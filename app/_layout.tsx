@@ -1,29 +1,23 @@
-import { Stack } from 'expo-router';
-import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
-import { StyleSheet } from 'react-native';
+import { AuthProvider } from './providers/AuthProvider';
 import { ErrorBoundary } from './components/ErrorBoundary';
 import Toast from 'react-native-toast-message';
+import { Stack } from 'expo-router';
 
 export default function RootLayout() {
   return (
-    <GestureHandlerRootView style={styles.container}>
       <SafeAreaProvider>
-        <ErrorBoundary>
-          <Stack>
-            <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-            <Stack.Screen name="workout/WorkoutScreen" options={{ headerShown: false }} />
-            <Stack.Screen name="+not-found" />
-          </Stack>
-        </ErrorBoundary>
-        <Toast/>
+        <AuthProvider>
+          <ErrorBoundary>
+            <Stack>
+              <Stack.Screen name="auth/login" options={{ headerShown: false }} />
+              <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+              <Stack.Screen name="workout/WorkoutScreen" options={{ headerShown: false }} />
+              <Stack.Screen name="+not-found" />
+            </Stack>
+          </ErrorBoundary>
+          <Toast />
+        </AuthProvider>
       </SafeAreaProvider>
-    </GestureHandlerRootView>
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-  },
-});

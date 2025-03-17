@@ -1,4 +1,4 @@
-const API_BASE = 'http://90.194.168.250:25561';
+const API_BASE = 'http://192.168.0.7:25561';
 
 export const getExercises = async (userId: number) => {
   try {

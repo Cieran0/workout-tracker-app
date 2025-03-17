@@ -1,13 +1,14 @@
 import { Tabs } from 'expo-router';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { ProtectedRoute } from '../components/ProtectedRoute';
+import { colors } from '../shared/theme';
 
 export default function TabLayout() {
   return (
     <ProtectedRoute>
       <Tabs
         screenOptions={{
-          tabBarActiveTintColor: '#ffd33d',
+          tabBarActiveTintColor: colors.activeTab,
           headerStyle: { backgroundColor: '#111111' },
           headerTintColor: '#fff',
           tabBarStyle: { backgroundColor: '#111111' },

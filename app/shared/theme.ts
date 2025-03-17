@@ -10,7 +10,7 @@ export const colors = {
   text: '#FFFFFF',
   muted: '#888888',
   inactiveTab: '#111111',
-  activeTab: '#ffd33d',
+  activeTab: '#00FF88',
 };
 
 // Typography
