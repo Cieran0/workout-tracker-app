@@ -44,7 +44,7 @@ export default function PrimaryButton({
 
 const styles = StyleSheet.create({
   text: {
-    fontSize: 16,
+    fontSize: 18,
     fontWeight: '600',
     letterSpacing: 0.5,
   }

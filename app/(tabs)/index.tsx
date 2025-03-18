@@ -1,12 +1,12 @@
 // (tabs)/index.tsx
 import React from 'react';
-import { View, Text, ScrollView, StyleSheet } from 'react-native';
+import { View, Text, ScrollView, StyleSheet, SafeAreaView } from 'react-native';
 import { useRouter } from 'expo-router';
 import PrimaryButton from '../components/PrimaryButton';
 import TemplateCard from '../components/TemplateCard';
 import AddTemplateButton from '../components/AddTemplateButton';
 import { templates } from '../templateData';
-import { buttons } from '../shared/theme';
+import { buttons, colors } from '../shared/theme';
 
 const Index: React.FC = () => {
   const router = useRouter();
@@ -16,6 +16,7 @@ const Index: React.FC = () => {
   };
 
   return (
+    <SafeAreaView style={{ flex: 1, backgroundColor: colors.background }}>
     <ScrollView 
       contentContainerStyle={styles.container} 
       style={styles.scrollView}
@@ -48,6 +49,7 @@ const Index: React.FC = () => {
         ))}
       </View>
     </ScrollView>
+    </SafeAreaView>
   );
 };
 

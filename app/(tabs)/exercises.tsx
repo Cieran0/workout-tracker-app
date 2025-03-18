@@ -1,5 +1,5 @@
 import React from 'react';
-import { TouchableOpacity, View, TextInput, StyleSheet, SectionList, Text } from 'react-native';
+import { TouchableOpacity, View, TextInput, StyleSheet, SectionList, Text, SafeAreaView } from 'react-native';
 import { useRouter } from 'expo-router';
 import PrimaryButton from '../components/PrimaryButton';
 import { useExercises } from '../hooks/useExercises';
@@ -51,6 +51,8 @@ const Exercises: React.FC = () => {
   );
 
   return (
+    <SafeAreaView style={{ flex: 1, backgroundColor: colors.background }}>
+    
     <View style={styles.container}>
       <View style={styles.headerContainer}>
         <TextInput
@@ -82,6 +84,8 @@ const Exercises: React.FC = () => {
         stickySectionHeadersEnabled={!searchQuery} // Disable sticky headers during search
       />
     </View>
+
+    </SafeAreaView>
   );
 };
 

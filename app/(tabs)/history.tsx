@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, Text, SectionList, StyleSheet } from 'react-native';
+import { View, Text, SectionList, StyleSheet, SafeAreaView } from 'react-native';
 import HistoryCard from '../components/HistoryCard';
 import { historyData } from '../historyData';
 import { typography, colors } from '../shared/theme';
@@ -37,6 +37,8 @@ const History: React.FC = () => {
   }, [sortedHistory]);
 
   return (
+    <SafeAreaView style={{ flex: 1, backgroundColor: colors.background }}>
+    
     <SectionList
       style={styles.scrollView}
       contentContainerStyle={styles.container}
@@ -53,6 +55,8 @@ const History: React.FC = () => {
       stickySectionHeadersEnabled={true}
       SectionSeparatorComponent={() => <View style={styles.sectionSeparator} />}
     />
+
+    </SafeAreaView>
   );
 };
 

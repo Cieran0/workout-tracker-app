@@ -19,6 +19,7 @@ export default function TabLayout() {
           name="profile"
           options={{
             title: 'Profile',
+            headerShown: false ,
             tabBarIcon: ({ color, focused }) => (
               <Ionicons 
                 name={focused ? 'person-circle' : 'person-circle-outline'} 
@@ -34,6 +35,7 @@ export default function TabLayout() {
           name="history"
           options={{
             title: 'History',
+            headerShown: false ,
             tabBarIcon: ({ color, focused }) => (
               <Ionicons 
                 name={focused ? 'time' : 'time-outline'} 
@@ -49,6 +51,7 @@ export default function TabLayout() {
           name="index"
           options={{
             title: 'Workout',
+            headerShown: false ,
             tabBarIcon: ({ color, focused }) => (
               <Ionicons 
                 name={focused ? 'home-sharp' : 'home-outline'} 
@@ -64,6 +67,7 @@ export default function TabLayout() {
           name="exercises"
           options={{
             title: 'Exercises',
+            headerShown: false ,
             tabBarIcon: ({ color, focused }) => (
               <Ionicons 
                 name={focused ? 'barbell' : 'barbell-outline'} 
@@ -79,6 +83,7 @@ export default function TabLayout() {
           name="form-checker"
           options={{
             title: 'Form Checker',
+            headerShown: false ,
             tabBarIcon: ({ color, focused }) => (
               <Ionicons 
                 name={focused ? 'checkmark-circle' : 'checkmark-circle-outline'} 

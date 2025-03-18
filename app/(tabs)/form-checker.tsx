@@ -1,14 +1,14 @@
-import { Text, View, StyleSheet } from 'react-native';
+import { Text, View, StyleSheet, SafeAreaView } from 'react-native';
 import { Link } from 'expo-router'; 
 import { styles } from '../style';
+import { colors } from '../shared/theme';
 
 export default function Index() {
   return (
+    <SafeAreaView style={{ flex: 1, backgroundColor: colors.background }}>
+
     <View style={styles.container}>
-      <Text style={styles.text}>Home screen</Text>
-      <Link href="/about" style={styles.button}>
-        Go to About screen
-      </Link>
     </View>
+    </SafeAreaView>
   );
 }
